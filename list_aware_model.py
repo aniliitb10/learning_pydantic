@@ -1,35 +1,26 @@
-import typing
+from typing import Optional, get_origin, Any, Type
 
 from pydantic import BaseModel
 
 
-class ListAwareModel(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
+def split_into_list(cls: Type[BaseModel], data: dict[str, Any]) -> dict[str, Any]:
+    for field_name, field_info in cls.model_fields.items():
 
-    def __init__(self, **data):
-        for key, model_field in self.model_fields.items():
-            field_type_un_subscripted = typing.get_origin(model_field.annotation)
-            if field_type_un_subscripted is not list:  # only list of items is entertained here, at least, as of now
-                continue
+        if get_origin(field_info.annotation) is not list:
+            continue  # we are only interested in lists here
 
-            # field_type_un_subscripted is list, just check what, among all possible keys, contains the value
-            possible_keys = [key] + (model_field.validation_alias.choices if model_field.validation_alias else [])
-            for possible_key in possible_keys:
-                value = data.get(possible_key, None)
-                if value is not None and isinstance(value, str):
-                    if not value:  # at this stage it simply means that it is an empty string
-                        data[possible_key] = []  # the default value
-                        break
+        va = field_info.validation_alias  # it can have multiple choices
+        va_choices: Optional[list[str]] = getattr(va, "choices", None) if va else [va]
 
-                    if not model_field.annotation.__args__:
-                        raise ValueError(f'type [{field_type_un_subscripted}] for [{key}] seems to be incomplete')
+        # now, following should be the unique set of possible keys
+        possible_keys = {pk for pk in [field_name, field_info.alias, *va_choices] if pk}
 
-                    item_type = model_field.annotation.__args__[0]
-                    if issubclass(item_type, str):
-                        parsed_values = [item.strip() for item in value.split(',')]
-                    else:  # item_type should be able to create an instance from the input, or might throw an error
-                        parsed_values = [item_type(item.strip()) for item in value.split(',')]
-                    data[possible_key] = parsed_values
+        for pk in possible_keys:
+            field_value: Optional[str] = data.get(pk, None)
 
-        super().__init__(**data)
+            if isinstance(field_value, str):  # even if the string is empty, it should return into list
+                values = field_value.strip('[]').split(',')
+                values = [value.strip() for value in values]
+                data[pk] = [value for value in values if value]
+
+    return data
