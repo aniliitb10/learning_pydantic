@@ -1,18 +1,9 @@
-from enum import Enum
 from typing import Any
 
 from pydantic import Field, AliasChoices, BaseModel, model_validator, ConfigDict
 
 import list_aware_model
-
-
-class Role(Enum):
-    Batsman = "Batsman"
-    Bowler = "Bowler"
-    AllRounder = "AllRounder"
-
-    def __repr__(self):
-        return self.value
+from enums import Role
 
 
 class Player(BaseModel):
@@ -21,7 +12,7 @@ class Player(BaseModel):
     name: str
     teams: list[str] = Field(alias='Associated teams', validation_alias=AliasChoices('teams', 'Linked Teams'))
     roles: list[Role] = Field(validation_alias=AliasChoices('Roles', 'role'), default_factory=list)
-    fav_dict: dict[int, int] | None  # just for fun
+    fav_dict: dict[int, int] | None = Field(default=None)
 
     # noinspection PyNestedDecorators
     @model_validator(mode='before')
@@ -31,5 +22,5 @@ class Player(BaseModel):
 
 
 if __name__ == '__main__':
-    player_data = {'name': 'Sachin', 'teams': 'India', 'Linked Teams': 'Hindustan', 'roles': 'Bowler', 'fav_dict': None}
+    player_data = {'name': 'Sachin', 'teams': 'India', 'Linked Teams': 'Hindustan', 'roles': 'Bowler'}
     print(Player(**player_data))

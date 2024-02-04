@@ -1,6 +1,7 @@
 from unittest import TestCase
 
-from player import Player, Role
+from player import Player
+from enums import Role
 
 
 class TestListAwareModel(TestCase):
@@ -29,8 +30,7 @@ class TestListAwareModel(TestCase):
         self.assertEqual(None, player.fav_dict)
 
     def test_by_first_alias(self):
-        player_data = {'name': 'Raina', 'teams': 'India', 'Linked Teams': 'India, Uttar Pradesh', 'Roles': '',
-                       'fav_dict': None}
+        player_data = {'name': 'Raina', 'teams': 'India', 'Linked Teams': 'India, Uttar Pradesh', 'Roles': ''}
         player = Player(**player_data)
         self.assertEqual('Raina', player.name)
         self.assertEqual(['India'], player.teams)
@@ -38,8 +38,7 @@ class TestListAwareModel(TestCase):
         self.assertEqual(None, player.fav_dict)
 
     def test_by_already_parsed_types(self):
-        player_data = {'name': 'Raina', 'teams': ['India', 'Uttar Pradesh'], 'Roles': [Role.Batsman],
-                       'fav_dict': None}
+        player_data = {'name': 'Raina', 'teams': ['India', 'Uttar Pradesh'], 'Roles': [Role.Batsman]}
         player = Player(**player_data)
         self.assertEqual('Raina', player.name)
         self.assertEqual(['India', 'Uttar Pradesh'], player.teams)
